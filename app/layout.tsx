@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { WhopThemeProvider } from '@whop-apps/sdk';
+import { Toaster } from '@/components/ui/toaster';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CartBrawl',
-  description: 'Run shopify revenue competitions in Whop',
+  title: 'CartBrawl - Shopify Revenue Competitions',
+  description: 'Compete with other Shopify stores in revenue competitions',
 };
 
 export default function RootLayout({
@@ -28,7 +29,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <WhopThemeProvider>{children}</WhopThemeProvider>
+        <WhopThemeProvider>
+          {children}
+          <Toaster />
+        </WhopThemeProvider>
       </body>
     </html>
   );
