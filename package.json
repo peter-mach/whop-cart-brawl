@@ -1,5 +1,5 @@
 {
-  "name": "whop-nextjs-app-template",
+  "name": "cartbrawl",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,6 +12,8 @@
     "prisma:migrate:dev": "dotenv -e .env.local -- pnpm prisma migrate dev"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@prisma/extension-accelerate": "^2.0.1",
     "@vercel/functions": "^2.0.3",
     "@whop-apps/sdk": "0.0.1-canary.111",
     "@whop/api": "^0.0.21-canary.4",
@@ -25,9 +27,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "dotenv-cli": "^8.0.0",
     "@whop-apps/dev-proxy": "0.0.1-canary.110",
+    "dotenv-cli": "^8.0.0",
+    "prisma": "^5.7.0",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
 }
