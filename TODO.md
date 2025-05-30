@@ -93,21 +93,21 @@
     - [X] Skip if lastRevenueSync < 5 minutes ago
   - [X] Winner determination job
 
-## Phase 5: API Routes
-- [ ] Creator endpoints
-  - [ ] `POST /api/competitions` - Create competition
-  - [ ] `GET /api/competitions/my-competitions` - List creator's competitions
-  - [ ] `PUT /api/competitions/:id` - Update competition
-  - [ ] `POST /api/competitions/:id/start` - Start competition with fund deposit
-- [ ] Participant endpoints
-  - [ ] `GET /api/competitions` - List all competitions
-  - [ ] `GET /api/competitions/:id` - Get competition details
-  - [ ] `POST /api/competitions/:id/join` - Join competition
-  - [ ] `GET /api/competitions/:id/leaderboard` - Get leaderboard (from DB, not real-time query)
-- [ ] Common endpoints
+## Phase 5: API Routes ✅ COMPLETED
+- [X] Creator endpoints
+  - [X] `POST /api/competitions` - Create competition ✅ COMPLETED
+  - [X] `GET /api/competitions/my-competitions` - List creator's competitions ✅ COMPLETED
+  - [X] `PUT /api/competitions/:id` - Update competition ✅ COMPLETED
+  - [X] `POST /api/competitions/:id/start` - Start competition manually ✅ COMPLETED
+- [X] Participant endpoints
+  - [X] `GET /api/competitions` - List all competitions ✅ COMPLETED
+  - [X] `GET /api/competitions/:id` - Get competition details ✅ COMPLETED
+  - [X] `POST /api/competitions/:id/join` - Join competition ✅ COMPLETED
+  - [X] `GET /api/competitions/:id/leaderboard` - Get leaderboard ✅ COMPLETED
+- [X] Common endpoints
   - [X] `GET /api/user/balance` - Get Whop balance ✅ COMPLETED
   - [X] `GET /api/user/profile` - Get user profile ✅ COMPLETED
-  - [ ] `GET /api/user/competitions` - Get user's competitions
+  - [X] `GET /api/user/competitions` - Get user's competitions ✅ COMPLETED
 - [X] Admin endpoints ✅ COMPLETED
   - [X] `GET /api/admin/background-jobs` - Get background job status
   - [X] `POST /api/admin/background-jobs` - Trigger background jobs manually
@@ -228,6 +228,24 @@ ENCRYPTION_KEY=
   - Job status monitoring and statistics
   - Manual job triggers for testing and maintenance
 
+## Files Created/Modified in Phase 5:
+- **Created**: `app/api/competitions/route.ts` - Main competitions API
+  - `GET` - List all competitions with filtering, search, and pagination
+  - `POST` - Create new competition with validation and fund escrow
+- **Created**: `app/api/competitions/my-competitions/route.ts` - Creator's competitions
+  - `GET` - List competitions created by authenticated user with detailed stats
+- **Created**: `app/api/competitions/[id]/route.ts` - Individual competition management
+  - `GET` - Get competition details with context-aware participant information
+  - `PUT` - Update competition (creator only, UPCOMING competitions only)
+- **Created**: `app/api/competitions/[id]/join/route.ts` - Join competition
+  - `POST` - Join competition with Shopify store validation and domain checks
+- **Created**: `app/api/competitions/[id]/leaderboard/route.ts` - Competition leaderboard
+  - `GET` - Get cached leaderboard with statistics and rankings
+- **Created**: `app/api/competitions/[id]/start/route.ts` - Manual competition start
+  - `POST` - Manually start competition (creator only, after start time)
+- **Created**: `app/api/user/competitions/route.ts` - User's competition history
+  - `GET` - Get competitions user created or participated in with summary stats
+
 ## Notes
 - All timestamps should be in UTC
 - Use `currentTotalPriceSet` from Shopify to handle refunds automatically
@@ -240,3 +258,5 @@ ENCRYPTION_KEY=
 - **Whop integration includes comprehensive error handling and logging**
 - **Push notifications are automatically sent for all major competition events**
 - **Background jobs handle all automated processes with proper error handling and monitoring**
+- **Phase 5 API routes provide complete REST API with proper authentication, validation, and error handling**
+- **All API routes include comprehensive input validation, proper HTTP status codes, and detailed error messages**
