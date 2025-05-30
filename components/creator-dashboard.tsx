@@ -67,6 +67,11 @@ export function CreatorDashboard() {
   } = useCreateCompetition();
   const { toast } = useToast();
 
+  // Helper function to trigger validation with consistent delay
+  const triggerValidation = () => {
+    setTimeout(validateForm, 100);
+  };
+
   // Validation logic
   const validateForm = () => {
     const errors: string[] = [];
@@ -100,9 +105,9 @@ export function CreatorDashboard() {
 
     if (startDate && endDate) {
       const durationDays = differenceInDays(endDate, startDate);
-      const durationHours = differenceInHours(endDate, startDate) % 24;
+      const totalDurationHours = differenceInHours(endDate, startDate);
 
-      if (durationHours < 1) {
+      if (totalDurationHours < 1) {
         errors.push('Competition must run for at least 1 hour');
       }
 
@@ -259,7 +264,10 @@ export function CreatorDashboard() {
                   id="title"
                   placeholder="Enter a catchy title"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    triggerValidation();
+                  }}
                   maxLength={100}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -273,7 +281,10 @@ export function CreatorDashboard() {
                   id="description"
                   placeholder="Describe what makes this competition special"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) => {
+                    setDescription(e.target.value);
+                    triggerValidation();
+                  }}
                   maxLength={500}
                 />
                 <div className="text-xs text-gray-500 mt-1">
@@ -293,7 +304,7 @@ export function CreatorDashboard() {
                     value={prize}
                     onChange={(e) => {
                       setPrize(e.target.value);
-                      setTimeout(validateForm, 100);
+                      triggerValidation();
                     }}
                     min="1"
                     max={balance}
@@ -323,7 +334,7 @@ export function CreatorDashboard() {
                         selected={startDate}
                         onSelect={(date) => {
                           setStartDate(date);
-                          setTimeout(validateForm, 100);
+                          triggerValidation();
                         }}
                         disabled={(date) => isBefore(date, new Date())}
                         initialFocus
@@ -350,7 +361,7 @@ export function CreatorDashboard() {
                         selected={endDate}
                         onSelect={(date) => {
                           setEndDate(date);
-                          setTimeout(validateForm, 100);
+                          triggerValidation();
                         }}
                         disabled={(date) =>
                           startDate
