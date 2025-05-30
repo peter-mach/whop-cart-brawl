@@ -1,5 +1,5 @@
 {
-  "name": "whop-nextjs-app-template",
+  "name": "cartbrawl",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,22 +12,40 @@
     "prisma:migrate:dev": "dotenv -e .env.local -- pnpm prisma migrate dev"
   },
   "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@prisma/extension-accelerate": "^2.0.1",
+    "@radix-ui/react-avatar": "^1.1.10",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-popover": "^1.1.14",
+    "@radix-ui/react-progress": "^1.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
+    "@radix-ui/react-tabs": "^1.1.12",
     "@vercel/functions": "^2.0.3",
     "@whop-apps/sdk": "0.0.1-canary.111",
     "@whop/api": "^0.0.21-canary.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.511.0",
     "next": "15.3.2",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-day-picker": "8.10.1",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^3.3.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "dotenv-cli": "^8.0.0",
     "@whop-apps/dev-proxy": "0.0.1-canary.110",
-    "tailwindcss": "^4",
+    "dotenv-cli": "^8.0.0",
+    "prisma": "^5.7.0",
+    "tailwindcss": "^3.4.17",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tw-animate-css": "^1.3.2",
     "typescript": "^5"
   },
   "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
