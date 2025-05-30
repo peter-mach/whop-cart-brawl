@@ -1,5 +1,8 @@
-# TODO
-Info: Shopify competitions app.
+# CartBrawl
+## Shopify competitions app.
+
+![CartBrawl Screenshot](ss.jpg)
+
 
 Creators will set a cash prize (whop balance) for users to compete in a whop to see who's Shopify store can get the most sales in a given time period.
 
