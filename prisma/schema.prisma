@@ -13,3 +13,59 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Competition {
+  id          String   @id @default(cuid())
+  creatorId   String   // Whop user ID
+  title       String
+  description String?
+  prize       Decimal  @db.Decimal(10, 2)
+  startDate   DateTime
+  endDate     DateTime
+  status      CompetitionStatus @default(DRAFT)
+  fundsTxId   String?  // Whop transaction ID
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants Participant[]
+  winner      Winner?
+
+  @@map("competitions")
+}
+
+model Participant {
+  id              String   @id @default(cuid())
+  userId          String   // Whop user ID
+  competitionId   String
+  shopifyDomain   String
+  accessToken     String   // Encrypted
+  totalRevenue    Decimal  @db.Decimal(10, 2) @default(0)
+  lastRevenueSync DateTime @default(now())
+  joinedAt        DateTime @default(now())
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, competitionId])
+  @@unique([shopifyDomain, competitionId])
+  @@map("participants")
+}
+
+model Winner {
+  id            String   @id @default(cuid())
+  competitionId String   @unique
+  userId        String
+  totalRevenue  Decimal  @db.Decimal(10, 2)
+  payoutTxId    String?  // Whop transaction ID
+  wonAt         DateTime @default(now())
+
+  competition Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@map("winners")
+}
+
+enum CompetitionStatus {
+  DRAFT
+  UPCOMING
+  ACTIVE
+  COMPLETED
+}

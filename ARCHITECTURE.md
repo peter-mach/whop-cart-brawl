@@ -28,6 +28,7 @@ app/
 1. **Competition Creation**
    - Creator fills form → Validates balance → Creates competition record
    - Sets to "draft" status until funds deposited
+   - Enforces maximum 60-day duration to stay within `read_orders` scope
 
 2. **Competition Start**
    - Creator deposits funds → Whop API escrows funds
@@ -36,15 +37,17 @@ app/
 3. **User Participation**
    - User joins → Redirected to Shopify OAuth
    - Grants read_orders permission → Store access token
-   - Initial revenue calculation from historical orders
+   - Calculate initial revenue from competition start date (if already active)
 
 4. **Revenue Tracking**
-   - Shopify webhooks on order creation/update
-   - Update participant's total revenue in real-time
-   - Emit WebSocket events for leaderboard updates
+   - Background job queries Shopify GraphQL API every 5 minutes
+   - Calculates total revenue using currentTotalPriceSet (handles refunds automatically)
+   - Updates participant's totalRevenue in database
+   - Optional: Subscribe to orders/paid webhook for real-time adjustments
 
 5. **Competition End**
    - Background job checks end time
+   - Final revenue calculation for all participants
    - Determines winner by highest revenue
    - Triggers Whop payout to winner
    - Sends notifications to all participants
@@ -67,6 +70,8 @@ model Competition {
 
   participants Participant[]
   winner      Winner?
+
+  // Constraint: endDate - startDate <= 60 days
 }
 
 model Participant {
@@ -76,25 +81,13 @@ model Participant {
   shopifyDomain   String
   accessToken     String   // Encrypted
   totalRevenue    Decimal  @db.Decimal(10, 2) @default(0)
+  lastRevenueSync DateTime @default(now())
   joinedAt        DateTime @default(now())
 
   competition Competition @relation(fields: [competitionId], references: [id])
-  orders      ShopifyOrder[]
 
   @@unique([userId, competitionId])
   @@unique([shopifyDomain, competitionId])
-}
-
-model ShopifyOrder {
-  id            String   @id @default(cuid())
-  participantId String
-  shopifyId     String   @unique
-  amount        Decimal  @db.Decimal(10, 2)
-  currency      String
-  createdAt     DateTime
-  processedAt   DateTime @default(now())
-
-  participant Participant @relation(fields: [participantId], references: [id])
 }
 
 model Winner {
@@ -116,12 +109,65 @@ enum CompetitionStatus {
 }
 ```
 
+### Revenue Calculation Strategy
+
+Using Shopify GraphQL API (recommended approach):
+
+```typescript
+// Fetch revenue for a participant during competition window
+async function calculateRevenue(participant: Participant, competition: Competition) {
+  const client = new shopify.clients.Graphql({ session });
+
+  // Competition duration is guaranteed to be <= 60 days
+  const query = `
+    query GetRevenue($cursor: String) {
+      orders(
+        first: 250
+        after: $cursor
+        query: """
+          created_at:>=${competition.startDate.toISOString()}
+          created_at:<=${competition.endDate.toISOString()}
+          financial_status:paid
+          status:any
+        """
+      ) {
+        edges {
+          node {
+            currentTotalPriceSet {
+              shopMoney { amount currencyCode }
+            }
+          }
+          cursor
+        }
+        pageInfo { hasNextPage }
+      }
+    }
+  `;
+
+  let revenue = 0;
+  let cursor = null;
+
+  do {
+    const response = await client.query({ data: { query, variables: { cursor } }});
+    const { edges, pageInfo } = response.body.data.orders;
+
+    revenue += edges.reduce((sum, { node }) =>
+      sum + parseFloat(node.currentTotalPriceSet.shopMoney.amount), 0
+    );
+
+    cursor = pageInfo.hasNextPage ? edges[edges.length - 1].cursor : null;
+  } while (cursor);
+
+  return revenue;
+}
+```
+
 ### Security Considerations
 
 1. **Shopify Access Tokens**
    - Encrypted at rest using AES-256
    - Never exposed to frontend
-   - Scoped to minimum permissions (read_orders)
+   - Scoped to `read_orders` only (no need for `read_all_orders`)
 
 2. **Webhook Validation**
    - Verify HMAC for Shopify webhooks
@@ -138,7 +184,7 @@ enum CompetitionStatus {
 Using Whop SDK WebSocket support:
 - Competition status changes
 - New participants joining
-- Revenue updates (throttled to prevent spam)
+- Revenue updates (throttled to every 5 minutes)
 - Winner announcement
 
 ### Background Jobs
@@ -148,14 +194,42 @@ Using Whop SDK WebSocket support:
    - Update status accordingly
    - Trigger winner calculation for ended competitions
 
-2. **Revenue Sync Job** (runs every 5 minutes)
-   - Fetch latest orders from Shopify for active competitions
-   - Update participant revenues
-   - Handle missed webhooks
+2. **Revenue Calculator Job** (runs every 5 minutes)
+   - For each active competition:
+     - Fetch all participants
+     - Query Shopify GraphQL for revenue in competition window
+     - Update totalRevenue and lastRevenueSync
+   - Skip if recently synced (< 5 minutes ago)
+
+3. **Optional: Webhook Processor**
+   - Listen to `orders/paid` webhook for real-time increments
+   - Listen to `refunds/create` webhook for decrements
+   - Update running total without full recalculation
 
 ### Error Handling
 
 - Graceful fallbacks for failed Shopify API calls
-- Retry logic for Whop payouts
+- Retry logic with exponential backoff
+- Handle rate limits (40 calls/sec for GraphQL)
 - User-friendly error messages
 - Comprehensive logging for debugging
+
+### Performance Optimizations
+
+1. **For High-Volume Stores** (>10k orders in window):
+   - Use Bulk Operations API instead of paginated queries
+   - Cache results with short TTL
+   - Consider read-replica for leaderboard queries
+
+2. **Contest Duration Limit**:
+   - Maximum 60 days ensures we stay within `read_orders` scope
+   - Simplifies permission requirements
+   - Avoids need for special Shopify app approval
+
+### Business Rules
+
+1. **Competition Constraints**:
+   - Maximum duration: 60 days
+   - Minimum duration: 1 hour (to prevent gaming)
+   - Start date must be in the future when creating
+   - Cannot modify dates after competition starts
