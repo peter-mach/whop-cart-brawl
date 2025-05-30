@@ -75,23 +75,23 @@
   - [X] Competition notification system with event-specific messages
   - [X] Created `/api/user/profile` endpoint
 
-## Phase 4: Core Competition Logic
-- [ ] Create competition service
-  - [ ] Create competition with fund escrow
-    - [ ] Validate duration <= 60 days
-    - [ ] Validate duration >= 1 hour
-    - [ ] Validate start date is in future
-  - [ ] Join competition flow
-  - [ ] Calculate revenue using Shopify GraphQL API
-  - [ ] Determine winner logic
-  - [ ] Auto-payout on competition end
-- [ ] Create background jobs
-  - [ ] Competition status updater (upcoming → active → completed)
-  - [ ] Revenue calculator job (every 5 minutes for active competitions)
-    - [ ] Query Shopify for orders in competition window
-    - [ ] Update participant totalRevenue
-    - [ ] Skip if lastRevenueSync < 5 minutes ago
-  - [ ] Winner determination job
+## Phase 4: Core Competition Logic ✅ COMPLETED
+- [X] Create competition service
+  - [X] Create competition with fund escrow
+    - [X] Validate duration <= 60 days
+    - [X] Validate duration >= 1 hour
+    - [X] Validate start date is in future
+  - [X] Join competition flow
+  - [X] Calculate revenue using Shopify GraphQL API
+  - [X] Determine winner logic
+  - [X] Auto-payout on competition end
+- [X] Create background jobs
+  - [X] Competition status updater (upcoming → active → completed)
+  - [X] Revenue calculator job (every 5 minutes for active competitions)
+    - [X] Query Shopify for orders in competition window
+    - [X] Update participant totalRevenue
+    - [X] Skip if lastRevenueSync < 5 minutes ago
+  - [X] Winner determination job
 
 ## Phase 5: API Routes
 - [ ] Creator endpoints
@@ -108,6 +108,9 @@
   - [X] `GET /api/user/balance` - Get Whop balance ✅ COMPLETED
   - [X] `GET /api/user/profile` - Get user profile ✅ COMPLETED
   - [ ] `GET /api/user/competitions` - Get user's competitions
+- [X] Admin endpoints ✅ COMPLETED
+  - [X] `GET /api/admin/background-jobs` - Get background job status
+  - [X] `POST /api/admin/background-jobs` - Trigger background jobs manually
 
 ## Phase 6: UI Implementation
 - [ ] Install shadcn/ui components
@@ -162,9 +165,9 @@
 ## Phase 9: Security & Error Handling
 - [ ] Implement rate limiting
 - [ ] Add input validation
-  - [ ] Competition duration validation (1 hour - 60 days)
-  - [ ] Start date must be future
-  - [ ] Prize amount validation
+  - [X] Competition duration validation (1 hour - 60 days) ✅ COMPLETED
+  - [X] Start date must be future ✅ COMPLETED
+  - [X] Prize amount validation ✅ COMPLETED
 - [X] Encrypt Shopify access tokens ✅ COMPLETED (Phase 2)
 - [ ] Add error boundaries
 - [ ] Implement proper error messages
@@ -209,6 +212,22 @@ ENCRYPTION_KEY=
 - **Created**: `app/api/user/balance/route.ts` - User balance endpoint
 - **Created**: `app/api/user/profile/route.ts` - User profile endpoint
 
+## Files Created/Modified in Phase 4:
+- **Created**: `lib/competition.ts` - Core competition service with all business logic
+  - Competition creation with validation and fund escrow
+  - Competition joining with comprehensive checks
+  - Revenue calculation and leaderboard management
+  - Winner determination and automatic payout
+  - User competition tracking and management
+- **Created**: `lib/background-jobs.ts` - Background job scheduler and processors
+  - Competition status management (UPCOMING → ACTIVE → COMPLETED)
+  - Revenue calculation jobs (every 5 minutes)
+  - Notification scheduling (starting soon, ending soon)
+  - Manual job triggers and monitoring
+- **Created**: `app/api/admin/background-jobs/route.ts` - Admin API for job management
+  - Job status monitoring and statistics
+  - Manual job triggers for testing and maintenance
+
 ## Notes
 - All timestamps should be in UTC
 - Use `currentTotalPriceSet` from Shopify to handle refunds automatically
@@ -220,3 +239,4 @@ ENCRYPTION_KEY=
 - Minimum competition duration is 1 hour to prevent gaming
 - **Whop integration includes comprehensive error handling and logging**
 - **Push notifications are automatically sent for all major competition events**
+- **Background jobs handle all automated processes with proper error handling and monitoring**
