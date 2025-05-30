@@ -1,303 +1,165 @@
-# CartBrawl - Detailed Implementation Plan
+# CartBrawl Implementation Plan
 
-## Tech Stack
-- **Framework**: Next.js 15 (already setup)
-- **Database**: PostgreSQL with Prisma ORM
-- **Styling**: Tailwind CSS (already setup)
-- **APIs**: Whop SDK (@whop/api), Shopify Admin API
-- **Authentication**: Whop (built-in) + Shopify OAuth
-
-## Phase 1: Database Setup & Core Models
-
-### 1.1 Install and Configure Prisma
-- [ ] Add Prisma dependencies to package.json
-- [ ] Initialize Prisma with PostgreSQL
-- [ ] Create database schema with models:
-  ```prisma
-  model Competition {
-    id            String   @id @default(cuid())
-    creatorId     String   // Whop user ID
-    title         String
-    description   String?
-    prizeAmount   Float
-    startDate     DateTime
-    endDate       DateTime
-    status        CompetitionStatus @default(DRAFT)
-    winnerId      String?
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
-    participants  Participant[]
-  }
-
-  model Participant {
-    id              String      @id @default(cuid())
-    competitionId   String
-    userId          String      // Whop user ID
-    shopifyStoreUrl String
-    shopifyAccessToken String   @encrypt
-    totalRevenue    Float       @default(0)
-    joinedAt        DateTime    @default(now())
-    competition     Competition @relation(fields: [competitionId], references: [id])
-    salesSnapshots  SalesSnapshot[]
-  }
-
-  model SalesSnapshot {
-    id            String      @id @default(cuid())
-    participantId String
-    revenue       Float
-    orderCount    Int
-    timestamp     DateTime    @default(now())
-    participant   Participant @relation(fields: [participantId], references: [id])
-  }
-
-  enum CompetitionStatus {
-    DRAFT
-    FUNDED
-    ACTIVE
-    COMPLETED
-  }
+## Phase 0: Project Setup & Dependencies
+- [ ] Install required dependencies
+  ```bash
+  pnpm add @prisma/client prisma @shopify/shopify-api @shopify/admin-api-client
+  pnpm add date-fns zod @tanstack/react-query axios
+  pnpm add @radix-ui/react-dialog @radix-ui/react-tabs @radix-ui/react-select
+  pnpm add @radix-ui/react-label @radix-ui/react-slot
+  pnpm add class-variance-authority clsx tailwind-merge
+  pnpm add lucide-react recharts
+  pnpm add -D @types/node
   ```
+- [ ] Set up shadcn/ui
+  ```bash
+  pnpm dlx shadcn@latest init
+  pnpm dlx shadcn@latest add card button input tabs dialog badge progress
+  pnpm dlx shadcn@latest add form label select calendar toast alert
+  pnpm dlx shadcn@latest add table skeleton avatar dropdown-menu
+  ```
+- [ ] Create .env.local file with required variables
+- [ ] Set up database connection
 
-### 1.2 Database Migrations
-- [ ] Create initial migration
-- [ ] Setup database connection in .env.local
+## Phase 1: Database Schema Setup
+- [ ] Define Prisma schema models
+  - [ ] Competition model (id, creatorId, title, description, prize, startDate, endDate, status, totalFunds)
+  - [ ] Participant model (id, userId, competitionId, shopifyStoreUrl, accessToken, totalRevenue, joinedAt)
+  - [ ] ShopifyOrder model (id, participantId, orderId, amount, orderDate, processed)
+  - [ ] Winner model (id, competitionId, participantId, totalRevenue, wonAt)
+- [ ] Run prisma migrations
+- [ ] Generate Prisma client
 
-## Phase 2: Shopify Integration
-
-### 2.1 OAuth Implementation
-- [ ] Create `/api/shopify/auth` endpoint for OAuth initiation
-- [ ] Create `/api/shopify/callback` for OAuth callback
-- [ ] Implement state parameter for security
-- [ ] Store encrypted access tokens
-
-### 2.2 Sales Tracking
-- [ ] Create `/api/shopify/webhooks/orders` endpoint
-- [ ] Register webhooks: orders/create, orders/updated
-- [ ] Implement webhook verification
-- [ ] Create background job to poll sales data (backup method)
-- [ ] Calculate revenue in store's currency and convert to USD
-
-### 2.3 Store Validation
-- [ ] Verify store is active
-- [ ] Check store has necessary permissions
-- [ ] Handle store disconnection
+## Phase 2: Shopify OAuth Integration
+- [ ] Create Shopify app in Partner Dashboard
+- [ ] Implement OAuth flow
+  - [ ] Create `/api/shopify/auth` endpoint for initiating OAuth
+  - [ ] Create `/api/shopify/callback` endpoint for handling OAuth callback
+  - [ ] Store encrypted access tokens in database
+- [ ] Create Shopify webhook handlers
+  - [ ] `/api/shopify/webhooks/order-create` for tracking new orders
+  - [ ] `/api/shopify/webhooks/order-update` for tracking order updates
+- [ ] Create service for fetching historical orders during competition join
 
 ## Phase 3: Whop Integration
+- [ ] Set up Whop SDK configuration
+- [ ] Implement balance check service
+- [ ] Create payout service using Whop API
+- [ ] Implement user authentication middleware
+- [ ] Create webhook handlers for Whop events
 
-### 3.1 User Context
-- [ ] Setup Whop SDK client initialization
-- [ ] Create user context hook to get current user
-- [ ] Implement user permission checks
+## Phase 4: Core Competition Logic
+- [ ] Create competition service
+  - [ ] Create competition with fund escrow
+  - [ ] Join competition flow
+  - [ ] Calculate real-time revenue from Shopify
+  - [ ] Determine winner logic
+  - [ ] Auto-payout on competition end
+- [ ] Create background jobs
+  - [ ] Competition status updater (upcoming → active → completed)
+  - [ ] Revenue calculator job
+  - [ ] Winner determination job
 
-### 3.2 Balance Operations
-- [ ] Implement balance check before competition creation
-- [ ] Create fund deposit flow using Whop payments
-- [ ] Implement automatic prize payout to winner
-- [ ] Handle refunds for cancelled competitions
+## Phase 5: API Routes
+- [ ] Creator endpoints
+  - [ ] `POST /api/competitions` - Create competition
+  - [ ] `GET /api/competitions/my-competitions` - List creator's competitions
+  - [ ] `PUT /api/competitions/:id` - Update competition
+  - [ ] `POST /api/competitions/:id/start` - Start competition with fund deposit
+- [ ] Participant endpoints
+  - [ ] `GET /api/competitions` - List all competitions
+  - [ ] `GET /api/competitions/:id` - Get competition details
+  - [ ] `POST /api/competitions/:id/join` - Join competition
+  - [ ] `GET /api/competitions/:id/leaderboard` - Get real-time leaderboard
+- [ ] Common endpoints
+  - [ ] `GET /api/user/balance` - Get Whop balance
+  - [ ] `GET /api/user/competitions` - Get user's competitions
 
-## Phase 4: Core Features Implementation
+## Phase 6: UI Implementation
+- [ ] Install shadcn/ui components
+  - [ ] Card, Button, Input, DatePicker, Tabs, Dialog, Badge, Progress
+- [ ] Creator Views
+  - [ ] Dashboard with tabs (Active, Upcoming, Completed)
+  - [ ] Create competition form
+    - [ ] Title, description, prize amount
+    - [ ] Start/end date pickers
+    - [ ] Fund deposit confirmation
+  - [ ] Competition management view
+- [ ] Participant Views
+  - [ ] Competition listing page
+    - [ ] Filter by status (upcoming, active, completed)
+    - [ ] Search functionality
+  - [ ] Competition detail page
+    - [ ] Join button with Shopify OAuth flow
+    - [ ] Real-time leaderboard
+    - [ ] Time remaining countdown
+    - [ ] Participant count
+  - [ ] Results view (won/lost status)
+- [ ] Common Components
+  - [ ] Navigation header
+  - [ ] Competition card component
+  - [ ] Leaderboard table
+  - [ ] Countdown timer
+  - [ ] Revenue display with animation
 
-### 4.1 Creator Features
-- [ ] **Create Competition Page** (`/competitions/create`)
-  - Title, description fields
-  - Date/time pickers for start/end
-  - Prize amount input with balance check
-  - Preview before confirmation
+## Phase 7: Real-time Updates
+- [ ] Implement WebSocket connection for live updates
+  - [ ] Leaderboard updates
+  - [ ] Participant count updates
+  - [ ] Competition status changes
+- [ ] Create event emitters for
+  - [ ] New participant joined
+  - [ ] Revenue updated
+  - [ ] Competition ended
 
-- [ ] **Competition Management** (`/competitions/[id]/manage`)
-  - View participant list
-  - Real-time leaderboard
-  - Cancel competition (if not started)
-  - Manual end competition option
+## Phase 8: Notifications
+- [ ] Implement Whop push notifications
+  - [ ] Competition starting soon (1 hour before)
+  - [ ] Competition went live
+  - [ ] Competition ending soon (1 hour before)
+  - [ ] Competition ended (won/lost)
+- [ ] In-app notifications
+  - [ ] Toast notifications for real-time events
 
-- [ ] **Fund Deposit Flow**
-  - Check creator's Whop balance
-  - Reserve funds on competition creation
-  - Release funds to winner on completion
+## Phase 9: Security & Error Handling
+- [ ] Implement rate limiting
+- [ ] Add input validation
+- [ ] Encrypt Shopify access tokens
+- [ ] Add error boundaries
+- [ ] Implement proper error messages
+- [ ] Add logging for debugging
 
-### 4.2 User Features
-- [ ] **Competition List Page** (`/competitions`)
-  - Grid/list view of competitions
-  - Filter: Upcoming, Active, Completed
-  - Search functionality
+## Phase 10: Testing & Deployment
+- [ ] Write unit tests for core logic
+- [ ] Test Shopify webhook handling
+- [ ] Test Whop payment flows
+- [ ] Create seed data for development
+- [ ] Set up environment variables
+- [ ] Deploy to Vercel
+- [ ] Configure production webhooks
 
-- [ ] **Competition Detail Page** (`/competitions/[id]`)
-  - Competition info display
-  - Join button (connect Shopify store)
-  - Real-time countdown
-  - Live leaderboard
-  - Participant count
+## Technical Stack
+- **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API routes, Prisma ORM
+- **Database**: PostgreSQL
+- **APIs**: Whop SDK, Shopify Admin API
+- **Real-time**: WebSockets (via Whop SDK)
+- **Deployment**: Vercel
 
-- [ ] **My Competitions Page** (`/my-competitions`)
-  - List of joined competitions
-  - Current ranking and revenue
-  - Win/loss history
-
-### 4.3 Real-time Features
-- [ ] Implement WebSocket connection for:
-  - Live revenue updates
-  - Participant count updates
-  - Competition status changes
-  - Winner announcement
-
-## Phase 5: Notification System
-
-### 5.1 Push Notifications
-- [ ] Competition starting soon (1 hour before)
-- [ ] Competition is now live
-- [ ] Competition ended - winner/loser notification
-- [ ] New participant joined (for creators)
-
-### 5.2 In-App Notifications
-- [ ] Notification center component
-- [ ] Mark as read functionality
-- [ ] Notification preferences
-
-## Phase 6: UI Components
-
-### 6.1 Shared Components
-- [ ] `CompetitionCard` - for list views
-- [ ] `Leaderboard` - real-time ranking display
-- [ ] `CountdownTimer` - for active competitions
-- [ ] `PrizeDisplay` - formatted prize amount
-- [ ] `ParticipantAvatar` - user display
-
-### 6.2 Page Layouts
-- [ ] Empty states for all pages
-- [ ] Loading states
-- [ ] Error boundaries
-- [ ] Mobile-responsive design
-
-## Phase 7: Background Jobs & Cron
-
-### 7.1 Scheduled Tasks
-- [ ] Competition status updater (every minute)
-  - Start competitions at scheduled time
-  - End competitions and determine winner
-  - Trigger winner payout
-
-- [ ] Sales data sync (every 5 minutes)
-  - Poll Shopify API for latest sales
-  - Update revenue totals
-  - Store snapshots for history
-
-### 7.2 Queue System
-- [ ] Implement job queue for:
-  - Webhook processing
-  - Payout processing
-  - Notification sending
-
-## Phase 8: Security & Performance
-
-### 8.1 Security
-- [ ] Input validation on all forms
-- [ ] Rate limiting on API endpoints
-- [ ] Shopify webhook verification
-- [ ] SQL injection prevention
-- [ ] XSS protection
-
-### 8.2 Performance
-- [ ] Database indexing strategy
-- [ ] Caching layer for leaderboards
-- [ ] Optimize Shopify API calls
-- [ ] Image optimization
-
-## Phase 9: Testing & Documentation
-
-### 9.1 Testing
-- [ ] Unit tests for core logic
-- [ ] Integration tests for API endpoints
-- [ ] E2E tests for critical flows
-- [ ] Load testing for real-time features
-
-### 9.2 Documentation
-- [ ] API documentation
-- [ ] User guide
-- [ ] Creator guide
-- [ ] Deployment guide
-
-## Phase 10: Launch Preparation
-
-### 10.1 Pre-launch
-- [ ] Beta testing with selected users
-- [ ] Performance monitoring setup
-- [ ] Error tracking (Sentry)
-- [ ] Analytics implementation
-
-### 10.2 Deployment
-- [ ] Environment variables setup
-- [ ] Database migrations
-- [ ] CI/CD pipeline
-- [ ] Monitoring and alerts
-
-## File Structure
+## Environment Variables Needed
 ```
-app/
-├── api/
-│   ├── competitions/
-│   │   ├── [id]/
-│   │   │   ├── join/route.ts
-│   │   │   ├── manage/route.ts
-│   │   │   └── route.ts
-│   │   └── route.ts
-│   ├── shopify/
-│   │   ├── auth/route.ts
-│   │   ├── callback/route.ts
-│   │   └── webhooks/
-│   │       └── orders/route.ts
-│   └── webhooks/
-│       └── whop/route.ts
-├── competitions/
-│   ├── [id]/
-│   │   ├── page.tsx
-│   │   └── manage/page.tsx
-│   ├── create/page.tsx
-│   └── page.tsx
-├── my-competitions/page.tsx
-└── page.tsx (dashboard)
-
-components/
-├── competitions/
-│   ├── CompetitionCard.tsx
-│   ├── CompetitionForm.tsx
-│   ├── Leaderboard.tsx
-│   └── JoinButton.tsx
-├── ui/
-│   ├── CountdownTimer.tsx
-│   ├── EmptyState.tsx
-│   └── LoadingSpinner.tsx
-└── layout/
-    ├── Header.tsx
-    └── NotificationCenter.tsx
-
-lib/
-├── shopify/
-│   ├── client.ts
-│   ├── webhooks.ts
-│   └── oauth.ts
-├── whop/
-│   ├── client.ts
-│   └── balance.ts
-├── prisma.ts
-└── utils/
-    ├── currency.ts
-    └── dates.ts
+DATABASE_URL=
+WHOP_API_KEY=
+WHOP_WEBHOOK_SECRET=
+SHOPIFY_CLIENT_ID=
+SHOPIFY_CLIENT_SECRET=
+SHOPIFY_WEBHOOK_SECRET=
+ENCRYPTION_KEY=
 ```
 
-## MVP Priority (Week 1-2)
-1. Database setup
-2. Basic competition CRUD
-3. Shopify OAuth
-4. Sales tracking (basic)
-5. Join competition flow
-6. Simple leaderboard
-7. Winner determination
-8. Manual payout process
-
-## Post-MVP Enhancements
-- Advanced analytics dashboard
-- Multiple prize tiers
-- Team competitions
-- Custom competition rules
-- Social sharing features
-- Achievement system
+## Notes
+- All timestamps should be in UTC
+- Revenue calculations should handle currency conversions
+- Competition prize must be deposited before start time
+- Winners are determined immediately when competition ends
+- Shopify stores can only participate in one active competition at a time
