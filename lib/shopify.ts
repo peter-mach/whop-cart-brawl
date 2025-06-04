@@ -2,9 +2,7 @@ import { shopifyApi, LATEST_API_VERSION } from '@shopify/shopify-api';
 import { restResources } from '@shopify/shopify-api/rest/admin/2023-10';
 import { createAdminApiClient } from '@shopify/admin-api-client';
 import { decrypt } from './encryption';
-import { PrismaClient } from './generated/prisma';
-
-const prisma = new PrismaClient();
+import { prisma } from './prisma';
 
 // Initialize Shopify API
 const shopify = shopifyApi({

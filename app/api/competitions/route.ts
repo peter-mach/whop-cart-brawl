@@ -1,9 +1,7 @@
 import { NextRequest } from 'next/server';
 import { withAuth, optionalAuth } from '@/lib/auth-middleware';
 import { createCompetition, CreateCompetitionData } from '@/lib/competition';
-import { PrismaClient } from '@/lib/generated/prisma';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // GET /api/competitions - List all competitions (public)
 export async function GET(request: NextRequest) {

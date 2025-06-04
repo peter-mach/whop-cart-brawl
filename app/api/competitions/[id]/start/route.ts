@@ -1,9 +1,7 @@
 import { NextRequest } from 'next/server';
 import { authenticateUser } from '@/lib/auth-middleware';
-import { PrismaClient } from '@/lib/generated/prisma';
+import { prisma } from '@/lib/prisma';
 import { competitionNotifications } from '@/lib/competition-whop';
-
-const prisma = new PrismaClient();
 
 // POST /api/competitions/[id]/start - Start competition manually (authenticated, creator only)
 export async function POST(

@@ -1,8 +1,6 @@
 import { NextRequest } from 'next/server';
 import { withAuth } from '@/lib/auth-middleware';
-import { PrismaClient } from '@/lib/generated/prisma';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // GET /api/competitions/my-competitions - List creator's competitions (authenticated)
 export const GET = withAuth(async (request: NextRequest, user) => {

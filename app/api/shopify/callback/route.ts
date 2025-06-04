@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { shopify } from '@/lib/shopify';
 import { encrypt } from '@/lib/encryption';
-import { PrismaClient } from '@/lib/generated/prisma';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {

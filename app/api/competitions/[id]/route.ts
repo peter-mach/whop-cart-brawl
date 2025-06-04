@@ -5,9 +5,7 @@ import {
   authenticateUser,
 } from '@/lib/auth-middleware';
 import { getCompetitionDetails } from '@/lib/competition';
-import { PrismaClient } from '@/lib/generated/prisma';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // GET /api/competitions/[id] - Get competition details (public)
 export async function GET(

@@ -1,4 +1,4 @@
-import { PrismaClient } from './generated/prisma';
+import { prisma } from './prisma';
 import { calculateRevenue } from './shopify';
 import {
   createCompetitionEscrow,
@@ -6,8 +6,6 @@ import {
   competitionNotifications,
 } from './competition-whop';
 import { encrypt } from './encryption';
-
-const prisma = new PrismaClient();
 
 export interface CreateCompetitionData {
   title: string;

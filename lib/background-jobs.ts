@@ -1,8 +1,6 @@
-import { PrismaClient } from './generated/prisma';
+import { prisma } from './prisma';
 import { updateCompetitionRevenue, determineWinner } from './competition';
 import { competitionNotifications } from './competition-whop';
-
-const prisma = new PrismaClient();
 
 /**
  * Update competition statuses based on current time
